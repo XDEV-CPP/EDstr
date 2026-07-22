@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 生成贪吃蛇自动演示 SVG 动画
-蛇会自己移动、吃食物、直到撞墙结束
+蛇会主动寻找并吃掉食物
 """
 
 import random
+import math
 
 # ============ 配置 ============
 GRID_SIZE = 20
@@ -16,9 +17,65 @@ SNAKE_BODY_START = "#4CAF50"
 SNAKE_BODY_END = "#1B5E20"
 FOOD_COLOR = "#ff3b3b"
 GRID_COLOR = "#2d4452"
-FRAMES = 80  # 总帧数
-MOVE_INTERVAL = 0.18  # 每帧间隔（秒）
+FRAMES = 120  # 总帧数（增加帧数让蛇能吃到更多食物）
+MOVE_INTERVAL = 0.15  # 每帧间隔（秒）
 # ==============================
+
+
+def find_path_to_food(snake_head, food, snake_body_set):
+    """
+    简单的寻路：选择离食物最近的可行方向
+    返回最佳方向
+    """
+    head_x, head_y = snake_head
+    food_x, food_y = food
+    
+    # 四个方向及对应的坐标变化
+    directions = [
+        ('right', 1, 0),
+        ('left', -1, 0),
+        ('up', 0, -1),
+        ('down', 0, 1)
+    ]
+    
+    # 计算每个方向的距离到食物的距离，选择最近的
+    best_direction = None
+    best_distance = float('inf')
+    
+    # 随机打乱方向顺序，避免每次都走同一条路
+    dir_list = directions.copy()
+    random.shuffle(dir_list)
+    
+    for direction, dx, dy in dir_list:
+        new_x = head_x + dx
+        new_y = head_y + dy
+        
+        # 检查是否撞墙
+        if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
+            continue
+        
+        # 检查是否撞自己
+        if (new_x, new_y) in snake_body_set:
+            continue
+        
+        # 计算到食物的距离（曼哈顿距离）
+        distance = abs(new_x - food_x) + abs(new_y - food_y)
+        
+        if distance < best_distance:
+            best_distance = distance
+            best_direction = direction
+    
+    # 如果没有可行方向（死路），选择任意可行方向
+    if best_direction is None:
+        for direction, dx, dy in dir_list:
+            new_x = head_x + dx
+            new_y = head_y + dy
+            if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE:
+                if (new_x, new_y) not in snake_body_set:
+                    best_direction = direction
+                    break
+    
+    return best_direction
 
 
 def generate_frames():
@@ -26,41 +83,39 @@ def generate_frames():
     # 初始化蛇（水平放置，头朝右）
     snake = [[9, 10], [8, 10], [7, 10], [6, 10]]
     direction = 'right'
-    next_direction = 'right'
     score = 0
     game_over = False
     frames = []
 
-    # 生成初始食物
+    # 生成初始食物（确保不在蛇身上）
     food = [12, 10]
     snake_set = set(tuple(p) for p in snake)
     while tuple(food) in snake_set:
         food = [random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)]
 
-    for _ in range(FRAMES):
+    for frame_idx in range(FRAMES):
         if game_over:
             # 游戏结束，重复最后一帧
             frames.append({
                 'snake': snake.copy(),
-                'food': food.copy() if food else [-1, -1],
+                'food': food.copy(),
                 'score': score,
                 'game_over': True,
                 'direction': direction
             })
             continue
 
-        # 更新方向（随机改变方向，增加观赏性）
-        if random.random() < 0.15 and not game_over:
-            possible = ['up', 'down', 'left', 'right']
-            opposite = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
-            # 移除反向
-            possible = [d for d in possible if d != opposite.get(direction)]
-            next_direction = random.choice(possible)
-
-        if next_direction:
-            opposite = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
-            if opposite.get(next_direction) != direction:
-                direction = next_direction
+        # ===== 自动寻路 =====
+        # 构建蛇身集合（用于碰撞检测）
+        snake_body_set = set(tuple(p) for p in snake[1:])  # 不包含头部
+        
+        # 计算最佳方向
+        best_dir = find_path_to_food(snake[0], food, snake_body_set)
+        
+        # 如果找到了可行方向，就使用它；否则保持原方向
+        if best_dir:
+            direction = best_dir
+        # else: 保持原方向（可能会撞墙，但game_over会处理）
 
         # 计算新头部
         head = snake[0]
@@ -98,7 +153,7 @@ def generate_frames():
             game_over = True
             frames.append({
                 'snake': new_snake,
-                'food': food.copy() if food else [-1, -1],
+                'food': food.copy(),
                 'score': score,
                 'game_over': True,
                 'direction': direction
@@ -111,6 +166,8 @@ def generate_frames():
         if is_eating:
             score += 1
             snake_set = set(tuple(p) for p in snake)
+            
+            # 检查是否胜利（蛇占满所有格子）
             if len(snake_set) >= GRID_SIZE * GRID_SIZE:
                 game_over = True
                 frames.append({
@@ -145,9 +202,10 @@ def generate_frames():
                     if food:
                         break
 
+        # 记录这一帧
         frames.append({
             'snake': snake.copy(),
-            'food': food.copy() if food else [-1, -1],
+            'food': food.copy(),
             'score': score,
             'game_over': False,
             'direction': direction
@@ -305,13 +363,14 @@ def render_svg(frames, output_path="snake.svg"):
 
     print(f"✅ 已生成: {output_path}")
     print(f"📊 帧数: {len(frames)}, 时长: {total_duration:.1f}s")
+    print(f"🏆 最终得分: {final_score}")
     print(f"📝 大小: {len(content)} 字节")
     return True
 
 
 if __name__ == "__main__":
     random.seed()
-    print("🐍 生成贪吃蛇自动演示动画...")
+    print("🐍 生成贪吃蛇自动寻路演示动画...")
     frames = generate_frames()
     render_svg(frames, "snake.svg")
     print("🎉 完成！")
