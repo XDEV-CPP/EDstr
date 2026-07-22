@@ -5,7 +5,6 @@
 
 import random
 import time
-from datetime import datetime
 
 # SVG 配置
 GRID_SIZE = 20
@@ -19,7 +18,8 @@ GRID_COLOR = "#2d4452"
 
 # 动画帧数
 FRAMES = 50
-MOVE_INTERVAL = 0.15  # 每帧间隔秒
+MOVE_INTERVAL = 0.15
+
 
 def generate_snake_frames():
     """生成贪吃蛇动画的每一帧"""
@@ -45,7 +45,8 @@ def generate_snake_frames():
                 'snake': snake,
                 'food': food,
                 'score': score,
-                'game_over': True
+                'game_over': True,
+                'direction': direction
             })
             continue
         
@@ -93,7 +94,8 @@ def generate_snake_frames():
                 'snake': new_snake,
                 'food': food,
                 'score': score,
-                'game_over': True
+                'game_over': True,
+                'direction': direction
             })
             continue
         
@@ -110,12 +112,13 @@ def generate_snake_frames():
                     'snake': snake,
                     'food': food,
                     'score': score,
-                    'game_over': True
+                    'game_over': True,
+                    'direction': direction
                 })
                 continue
             new_food = None
             attempts = 0
-            while attempts < 100:
+            while attempts < 1000:
                 fx = random.randint(0, GRID_SIZE-1)
                 fy = random.randint(0, GRID_SIZE-1)
                 if (fx, fy) not in snake_set:
@@ -125,7 +128,7 @@ def generate_snake_frames():
             if new_food:
                 food = new_food
             else:
-                # 理论上不可能，兜底
+                # 兜底：遍历所有格子
                 for y in range(GRID_SIZE):
                     for x in range(GRID_SIZE):
                         if (x, y) not in snake_set:
@@ -138,10 +141,12 @@ def generate_snake_frames():
             'snake': snake,
             'food': food,
             'score': score,
-            'game_over': False
+            'game_over': False,
+            'direction': direction
         })
     
     return frames
+
 
 def render_svg(frames, output_path="snake.svg"):
     """将帧序列渲染为 SVG 动画"""
@@ -177,18 +182,18 @@ def render_svg(frames, output_path="snake.svg"):
     
     # 动画帧
     for idx, frame in enumerate(frames):
-        # 如果是最后一帧，显示"游戏结束"
         is_last = (idx == len(frames) - 1)
-        
-        # 可见性控制
         begin_time = idx * MOVE_INTERVAL
         end_time = (idx + 1) * MOVE_INTERVAL if not is_last else "indefinite"
         
-        visibility = f'<set attributeName="visibility" to="visible" begin="{begin_time}s" end="{end_time}s"/>'
+        snake = frame['snake']
+        food = frame['food']
+        game_over = frame['game_over']
+        direction = frame.get('direction', 'right')
         
         # 食物
-        if not frame['game_over'] or is_last:
-            fx, fy = frame['food']
+        if (not game_over or is_last) and food:
+            fx, fy = food
             cx = fx * CELL_SIZE + CELL_SIZE / 2
             cy = fy * CELL_SIZE + CELL_SIZE / 2
             radius = CELL_SIZE * 0.35
@@ -196,13 +201,12 @@ def render_svg(frames, output_path="snake.svg"):
             svg_parts.append(f'''
     <!-- 帧 {idx} - 食物 -->
     <g visibility="hidden">
-        {visibility}
+        <set attributeName="visibility" to="visible" begin="{begin_time}s" end="{end_time}s"/>
         <circle cx="{cx}" cy="{cy}" r="{radius}" fill="{FOOD_COLOR}" class="food"/>
         <circle cx="{cx-2}" cy="{cy-3}" r="{radius*0.3}" fill="#ff8a8a" opacity="0.7"/>
     </g>''')
         
         # 蛇
-        snake = frame['snake']
         for i, (sx, sy) in enumerate(snake):
             is_head = (i == 0)
             x = sx * CELL_SIZE
@@ -212,7 +216,6 @@ def render_svg(frames, output_path="snake.svg"):
             if is_head:
                 color = SNAKE_HEAD
             else:
-                # 渐变色
                 ratio = i / len(snake) if len(snake) > 0 else 0
                 green = int(70 + 100 * (1 - ratio))
                 color = f"rgb(30, {green}, 70)"
@@ -220,7 +223,7 @@ def render_svg(frames, output_path="snake.svg"):
             svg_parts.append(f'''
     <!-- 帧 {idx} - 蛇节 {i} -->
     <g visibility="hidden">
-        {visibility}
+        <set attributeName="visibility" to="visible" begin="{begin_time}s" end="{end_time}s"/>
         <rect x="{x+1}" y="{y+1}" width="{size}" height="{size}" rx="3" 
               fill="{color}" stroke="none"/>
 ''')
@@ -228,35 +231,42 @@ def render_svg(frames, output_path="snake.svg"):
             # 蛇头眼睛
             if is_head:
                 # 根据方向调整眼睛位置
-                eye_x1, eye_y1, eye_x2, eye_y2 = 0, 0, 0, 0
                 if direction == 'right':
-                    eye_x1, eye_y1 = x + 10, y + 4
-                    eye_x2, eye_y2 = x + 10, y + 12
+                    eye_x1, eye_y1 = x + 11, y + 4
+                    eye_x2, eye_y2 = x + 11, y + 12
+                    pup_x1, pup_y1 = 1, 0
+                    pup_x2, pup_y2 = 1, 0
                 elif direction == 'left':
-                    eye_x1, eye_y1 = x + 6, y + 4
-                    eye_x2, eye_y2 = x + 6, y + 12
+                    eye_x1, eye_y1 = x + 5, y + 4
+                    eye_x2, eye_y2 = x + 5, y + 12
+                    pup_x1, pup_y1 = -1, 0
+                    pup_x2, pup_y2 = -1, 0
                 elif direction == 'up':
-                    eye_x1, eye_y1 = x + 4, y + 6
-                    eye_x2, eye_y2 = x + 12, y + 6
+                    eye_x1, eye_y1 = x + 4, y + 5
+                    eye_x2, eye_y2 = x + 12, y + 5
+                    pup_x1, pup_y1 = 0, -1
+                    pup_x2, pup_y2 = 0, -1
                 else:  # down
-                    eye_x1, eye_y1 = x + 4, y + 10
-                    eye_x2, eye_y2 = x + 12, y + 10
+                    eye_x1, eye_y1 = x + 4, y + 11
+                    eye_x2, eye_y2 = x + 12, y + 11
+                    pup_x1, pup_y1 = 0, 1
+                    pup_x2, pup_y2 = 0, 1
                 
                 svg_parts.append(f'''
-        <circle cx="{eye_x1}" cy="{eye_y1}" r="2" fill="#f0faf4"/>
-        <circle cx="{eye_x2}" cy="{eye_y2}" r="2" fill="#f0faf4"/>
-        <circle cx="{eye_x1+1}" cy="{eye_y1}" r="1" fill="#0a1a1a"/>
-        <circle cx="{eye_x2+1}" cy="{eye_y2}" r="1" fill="#0a1a1a"/>
+        <circle cx="{eye_x1}" cy="{eye_y1}" r="2.5" fill="#f0faf4"/>
+        <circle cx="{eye_x2}" cy="{eye_y2}" r="2.5" fill="#f0faf4"/>
+        <circle cx="{eye_x1 + pup_x1}" cy="{eye_y1 + pup_y1}" r="1.2" fill="#0a1a1a"/>
+        <circle cx="{eye_x2 + pup_x2}" cy="{eye_y2 + pup_y2}" r="1.2" fill="#0a1a1a"/>
 ''')
             
             svg_parts.append('    </g>')
     
-    # 显示分数（动画结束后显示最终分数）
+    # 显示分数
     final_score = frames[-1]['score'] if frames else 0
     svg_parts.append(f'''
     <!-- 分数 -->
     <g>
-        <rect x="0" y="{CANVAS_SIZE}" width="{CANVAS_SIZE}" height="60" fill="{BG_COLOR}" opacity="0.9"/>
+        <rect x="0" y="{CANVAS_SIZE}" width="{CANVAS_SIZE}" height="60" fill="{BG_COLOR}" opacity="0.95"/>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE + 35}" 
               text-anchor="middle" fill="#b7e4d4" font-size="20" font-weight="bold">
             🍎 分数: <tspan fill="#f5c542">{final_score}</tspan>
@@ -273,21 +283,21 @@ def render_svg(frames, output_path="snake.svg"):
         <rect x="0" y="0" width="{CANVAS_SIZE}" height="{CANVAS_SIZE}" 
               fill="rgba(8,18,24,0.75)" visibility="hidden">
             <animate attributeName="visibility" to="visible" 
-                     begin="{len(frames)*MOVE_INTERVAL}s" dur="1s" fill="freeze"/>
+                     begin="{len(frames)*MOVE_INTERVAL}s" dur="0.1s" fill="freeze"/>
         </rect>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE/2 - 10}" 
               text-anchor="middle" fill="#f28b82" font-size="32" font-weight="bold"
               visibility="hidden">
             💀 游戏结束
             <animate attributeName="visibility" to="visible" 
-                     begin="{len(frames)*MOVE_INTERVAL}s" dur="1s" fill="freeze"/>
+                     begin="{len(frames)*MOVE_INTERVAL}s" dur="0.1s" fill="freeze"/>
         </text>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE/2 + 30}" 
               text-anchor="middle" fill="#bdd9d0" font-size="14"
               visibility="hidden">
             刷新页面重新观看
             <animate attributeName="visibility" to="visible" 
-                     begin="{len(frames)*MOVE_INTERVAL}s" dur="1s" fill="freeze"/>
+                     begin="{len(frames)*MOVE_INTERVAL}s" dur="0.1s" fill="freeze"/>
         </text>
     </g>
 ''')
@@ -295,21 +305,27 @@ def render_svg(frames, output_path="snake.svg"):
     svg_parts.append('\n</svg>')
     
     # 写入文件
+    full_svg = ''.join(svg_parts)
     with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(''.join(svg_parts))
+        f.write(full_svg)
     
     print(f"✅ SVG 已生成: {output_path}")
     print(f"📊 总帧数: {len(frames)}")
     print(f"🏆 最终分数: {final_score}")
     print(f"⏱️  动画时长: {len(frames) * MOVE_INTERVAL:.1f} 秒")
+    print(f"📝 文件大小: {len(full_svg)} 字节")
+    return True
+
 
 if __name__ == "__main__":
-    # 设置随机种子以保证可重现性（可选）
     random.seed(int(time.time()))
     
-    # 生成动画帧
     print("🎮 生成贪吃蛇动画帧...")
     frames = generate_snake_frames()
+    success = render_svg(frames, "snake.svg")
     
-    # 渲染 SVG
-    render_svg(frames, "snake.svg")
+    if success:
+        print("🎉 生成成功！")
+    else:
+        print("❌ 生成失败")
+        exit(1)
