@@ -1,14 +1,9 @@
 name: 生成贪吃蛇 SVG
 
 on:
-  # 定时触发：每天 UTC 00:00 运行
   schedule:
     - cron: '0 0 * * *'
-  
-  # 手动触发（支持在 Actions 页面手动运行）
   workflow_dispatch:
-  
-  # 推送到 main 分支时触发（便于测试）
   push:
     branches:
       - main
@@ -16,27 +11,32 @@ on:
 jobs:
   generate-snake:
     runs-on: ubuntu-latest
-    
     permissions:
-      contents: write  # 允许提交代码
+      contents: write
     
     steps:
-      # 1. 检出仓库
       - name: 检出代码
         uses: actions/checkout@v4
       
-      # 2. 设置 Python
       - name: 设置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      # 3. 运行生成脚本
+      - name: 验证脚本存在
+        run: |
+          ls -la .github/scripts/
+          cat .github/scripts/generate_snake_svg.py | head -20
+      
       - name: 生成贪吃蛇 SVG
         run: |
           python .github/scripts/generate_snake_svg.py
       
-      # 4. 提交并推送变更
+      - name: 验证 SVG 已生成
+        run: |
+          ls -la snake.svg
+          head -5 snake.svg
+      
       - name: 提交 SVG 到仓库
         run: |
           git config --local user.email "action@github.com"
