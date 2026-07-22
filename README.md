@@ -115,6 +115,4 @@ auto cipher = chacha20_encrypt(plaintext, key, nonce);
 
 ## 防伪标志
 
-## 🐍 贪吃蛇动画
-
 ![贪吃蛇](snake.svg)
