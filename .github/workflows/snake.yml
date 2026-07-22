@@ -1,5 +1,4 @@
 name: 生成贪吃蛇 SVG
-
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -7,36 +6,29 @@ on:
   push:
     branches:
       - main
-
 jobs:
   generate-snake:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-      
       - name: 设置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
       - name: 验证脚本存在
         run: |
           ls -la .github/scripts/
           cat .github/scripts/generate_snake_svg.py | head -20
-      
       - name: 生成贪吃蛇 SVG
         run: |
           python .github/scripts/generate_snake_svg.py
-      
       - name: 验证 SVG 已生成
         run: |
           ls -la snake.svg
           head -5 snake.svg
-      
       - name: 提交 SVG 到仓库
         run: |
           git config --local user.email "action@github.com"
