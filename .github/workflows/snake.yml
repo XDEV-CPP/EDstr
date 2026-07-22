@@ -1,46 +1,34 @@
-name: 生成贪吃蛇 SVG
+name: 生成贪吃蛇演示动画
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *'      # 每天 UTC 0:00 运行
+  workflow_dispatch:          # 支持手动触发
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  generate-snake:
+  generate:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-      
+
       - name: 设置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
-      - name: 验证脚本存在
-        run: |
-          ls -la .github/scripts/
-          cat .github/scripts/generate_snake_svg.py | head -20
-      
-      - name: 生成贪吃蛇 SVG
-        run: |
-          python .github/scripts/generate_snake_svg.py
-      
-      - name: 验证 SVG 已生成
-        run: |
-          ls -la snake.svg
-          head -5 snake.svg
-      
-      - name: 提交 SVG 到仓库
+
+      - name: 生成 SVG 动画
+        run: python .github/scripts/generate_snake_svg.py
+
+      - name: 提交到仓库
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add snake.svg
-          git diff --staged --quiet || git commit -m "🔄 更新贪吃蛇 SVG [skip ci]"
+          git diff --staged --quiet || git commit -m "🔄 更新贪吃蛇演示动画 [skip ci]"
           git push
