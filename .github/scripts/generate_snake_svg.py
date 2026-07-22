@@ -14,8 +14,8 @@ BG_COLOR = "#1f2e38"
 SNAKE_HEAD = "#7bed8a"
 FOOD_COLOR = "#ff3b3b"
 GRID_COLOR = "#2d4452"
-FRAMES = 200  # 更多帧
-MOVE_INTERVAL = 0.15
+FRAMES = 300  # 更多帧
+MOVE_INTERVAL = 0.12
 # ==============================
 
 
@@ -51,7 +51,6 @@ def find_path_to_food(snake_head, food, snake_body_set):
             best_dist = dist
             best_dir = direction
 
-    # 如果没有可行方向，返回 None（保持原方向）
     return best_dir
 
 
@@ -71,7 +70,7 @@ def generate_frames():
         food = [random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)]
 
     for _ in range(FRAMES):
-        # 记录当前帧
+        # 记录当前帧（深拷贝）
         frames.append({
             'snake': [p[:] for p in snake],
             'food': food[:] if food else [-1, -1],
@@ -130,21 +129,25 @@ def generate_frames():
         if is_eating:
             score += 1
             snake_set = set(tuple(p) for p in snake)
+
+            # 检查是否胜利
             if len(snake_set) >= GRID_SIZE * GRID_SIZE:
                 game_over = True
                 continue
 
             # 生成新食物
             new_food = None
-            for _ in range(2000):
+            for _ in range(5000):
                 fx = random.randint(0, GRID_SIZE - 1)
                 fy = random.randint(0, GRID_SIZE - 1)
                 if (fx, fy) not in snake_set:
                     new_food = [fx, fy]
                     break
+
             if new_food:
                 food = new_food
             else:
+                # 兜底：遍历所有格子
                 for y in range(GRID_SIZE):
                     for x in range(GRID_SIZE):
                         if (x, y) not in snake_set:
@@ -152,6 +155,9 @@ def generate_frames():
                             break
                     if food:
                         break
+
+            # 调试输出
+            print(f"🍎 吃到食物！得分: {score}, 新食物位置: {food}")
 
     # 如果最后一帧不是 game_over，添加一个结束标记
     if not game_over:
@@ -163,11 +169,12 @@ def generate_frames():
             'direction': direction
         })
 
+    print(f"📊 总帧数: {len(frames)}, 最终得分: {score}")
     return frames
 
 
 def render_svg(frames, output_path="snake.svg"):
-    """渲染 SVG（使用 opacity 控制显示）"""
+    """渲染 SVG"""
     parts = []
 
     # SVG 头部
@@ -197,7 +204,7 @@ def render_svg(frames, output_path="snake.svg"):
 
     parts.append('    </g>\n')
 
-    # 每一帧：使用 opacity 控制，默认透明
+    # 每一帧
     for idx, frame in enumerate(frames):
         begin = idx * MOVE_INTERVAL
         duration = MOVE_INTERVAL
@@ -206,14 +213,15 @@ def render_svg(frames, output_path="snake.svg"):
         food = frame['food']
         game_over = frame['game_over']
         direction = frame.get('direction', 'right')
+        score = frame['score']  # 用于调试
 
-        # 所有元素放入一个组，用 opacity 控制显示
         parts.append(f'''
+    <!-- 帧 {idx} (得分: {score}) -->
     <g opacity="0">
         <animate attributeName="opacity" to="1" begin="{begin}s" dur="{duration}s" fill="freeze"/>
         <animate attributeName="opacity" to="0" begin="{begin + duration}s" dur="0.01s" fill="freeze"/>''')
 
-        # 食物（只在非 game_over 帧显示）
+        # 食物
         if food and food[0] >= 0 and not game_over:
             fx, fy = food
             cx = fx * CELL_SIZE + CELL_SIZE / 2
@@ -260,7 +268,7 @@ def render_svg(frames, output_path="snake.svg"):
         parts.append('''
     </g>''')
 
-    # 固定分数栏（一直显示）
+    # 固定分数栏（显示最终得分）
     final_score = frames[-1]['score'] if frames else 0
     parts.append(f'''
     <!-- 分数栏 -->
@@ -272,7 +280,7 @@ def render_svg(frames, output_path="snake.svg"):
         </text>
     </g>''')
 
-    # 游戏结束蒙层（最后一帧之后显示）
+    # 游戏结束蒙层
     total_time = len(frames) * MOVE_INTERVAL
     parts.append(f'''
     <!-- 游戏结束蒙层 -->
@@ -285,7 +293,7 @@ def render_svg(frames, output_path="snake.svg"):
         </text>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE/2 + 30}"
               text-anchor="middle" fill="#bdd9d0" font-size="13">
-            🔄 刷新页面重新播放
+            🏆 最终得分: {final_score}
         </text>
     </g>''')
 
