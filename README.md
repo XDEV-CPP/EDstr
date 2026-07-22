@@ -1,8 +1,6 @@
 # EDstr
 一个纯C++头文件库，覆盖80+种加密/解密/哈希算法，专为CTF竞赛和密码学学习设计。
 
-> 一个纯 C++ 头文件库，覆盖 **80+ 种**加密/解密/哈希算法，专为 CTF 竞赛和密码学学习设计。
-
 <div align="center">
 
 ![C++](https://img.shields.io/badge/C++-17-blue.svg?style=flat-square&logo=c%2B%2B)
