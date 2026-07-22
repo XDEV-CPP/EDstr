@@ -14,7 +14,7 @@ BG_COLOR = "#1f2e38"
 SNAKE_HEAD = "#7bed8a"
 FOOD_COLOR = "#ff3b3b"
 GRID_COLOR = "#2d4452"
-FRAMES = 300  # 更多帧
+FRAMES = 1000000  # 更多帧
 MOVE_INTERVAL = 0.12
 # ==============================
 
