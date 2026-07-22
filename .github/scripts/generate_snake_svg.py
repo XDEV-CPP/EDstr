@@ -9,7 +9,6 @@ GRID_COLOR = "#2d4452"
 FRAMES = 300
 MOVE_INTERVAL = 0.12
 def find_path_to_food(snake_head, food, snake_body_set):
-    """选择离食物最近的可行方向"""
     head_x, head_y = snake_head
     food_x, food_y = food
     directions = [
