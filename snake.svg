@@ -109,8 +109,8 @@
     <!-- 帧 2 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="0.3s" end="0.44999999999999996s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 2 - 蛇节 0 -->
     <g visibility="hidden">
@@ -156,8 +156,8 @@
     <!-- 帧 3 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="0.44999999999999996s" end="0.6s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 3 - 蛇节 0 -->
     <g visibility="hidden">
@@ -209,8 +209,8 @@
     <!-- 帧 4 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="0.6s" end="0.75s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 4 - 蛇节 0 -->
     <g visibility="hidden">
@@ -268,8 +268,8 @@
     <!-- 帧 5 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="0.75s" end="0.8999999999999999s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 5 - 蛇节 0 -->
     <g visibility="hidden">
@@ -333,8 +333,8 @@
     <!-- 帧 6 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="0.8999999999999999s" end="1.05s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 6 - 蛇节 0 -->
     <g visibility="hidden">
@@ -404,8 +404,8 @@
     <!-- 帧 7 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="1.05s" end="1.2s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 7 - 蛇节 0 -->
     <g visibility="hidden">
@@ -481,8 +481,8 @@
     <!-- 帧 8 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="1.2s" end="1.3499999999999999s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 8 - 蛇节 0 -->
     <g visibility="hidden">
@@ -564,8 +564,8 @@
     <!-- 帧 9 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="1.3499999999999999s" end="1.5s"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 9 - 蛇节 0 -->
     <g visibility="hidden">
@@ -3896,8 +3896,8 @@
     <!-- 帧 49 - 食物 -->
     <g visibility="hidden">
         <set attributeName="visibility" to="visible" begin="7.35s" end="indefinites"/>
-        <circle cx="190.0" cy="50.0" r="7.0" fill="#ff3b3b" class="food"/>
-        <circle cx="188.0" cy="47.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
+        <circle cx="50.0" cy="150.0" r="7.0" fill="#ff3b3b" class="food"/>
+        <circle cx="48.0" cy="147.0" r="2.1" fill="#ff8a8a" opacity="0.7"/>
     </g>
     <!-- 帧 49 - 蛇节 0 -->
     <g visibility="hidden">
