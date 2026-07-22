@@ -5,7 +5,6 @@
 """
 
 import random
-import math
 
 # ============ 配置 ============
 GRID_SIZE = 20
@@ -13,113 +12,86 @@ CELL_SIZE = 20
 CANVAS_SIZE = GRID_SIZE * CELL_SIZE
 BG_COLOR = "#1f2e38"
 SNAKE_HEAD = "#7bed8a"
-SNAKE_BODY_START = "#4CAF50"
-SNAKE_BODY_END = "#1B5E20"
 FOOD_COLOR = "#ff3b3b"
 GRID_COLOR = "#2d4452"
-FRAMES = 120  # 总帧数（增加帧数让蛇能吃到更多食物）
-MOVE_INTERVAL = 0.15  # 每帧间隔（秒）
+FRAMES = 200  # 更多帧
+MOVE_INTERVAL = 0.15
 # ==============================
 
 
 def find_path_to_food(snake_head, food, snake_body_set):
-    """
-    简单的寻路：选择离食物最近的可行方向
-    返回最佳方向
-    """
+    """选择离食物最近的可行方向"""
     head_x, head_y = snake_head
     food_x, food_y = food
-    
-    # 四个方向及对应的坐标变化
+
     directions = [
         ('right', 1, 0),
         ('left', -1, 0),
         ('up', 0, -1),
-        ('down', 0, 1)
+        ('down', 0, 1),
     ]
-    
-    # 计算每个方向的距离到食物的距离，选择最近的
-    best_direction = None
-    best_distance = float('inf')
-    
-    # 随机打乱方向顺序，避免每次都走同一条路
-    dir_list = directions.copy()
-    random.shuffle(dir_list)
-    
-    for direction, dx, dy in dir_list:
+
+    # 随机打乱，增加观赏性
+    random.shuffle(directions)
+
+    best_dir = None
+    best_dist = float('inf')
+
+    for direction, dx, dy in directions:
         new_x = head_x + dx
         new_y = head_y + dy
-        
-        # 检查是否撞墙
+
         if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
             continue
-        
-        # 检查是否撞自己
         if (new_x, new_y) in snake_body_set:
             continue
-        
-        # 计算到食物的距离（曼哈顿距离）
-        distance = abs(new_x - food_x) + abs(new_y - food_y)
-        
-        if distance < best_distance:
-            best_distance = distance
-            best_direction = direction
-    
-    # 如果没有可行方向（死路），选择任意可行方向
-    if best_direction is None:
-        for direction, dx, dy in dir_list:
-            new_x = head_x + dx
-            new_y = head_y + dy
-            if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE:
-                if (new_x, new_y) not in snake_body_set:
-                    best_direction = direction
-                    break
-    
-    return best_direction
+
+        dist = abs(new_x - food_x) + abs(new_y - food_y)
+        if dist < best_dist:
+            best_dist = dist
+            best_dir = direction
+
+    # 如果没有可行方向，返回 None（保持原方向）
+    return best_dir
 
 
 def generate_frames():
-    """生成动画帧序列"""
-    # 初始化蛇（水平放置，头朝右）
+    """生成动画帧"""
+    # 初始蛇
     snake = [[9, 10], [8, 10], [7, 10], [6, 10]]
     direction = 'right'
     score = 0
     game_over = False
     frames = []
 
-    # 生成初始食物（确保不在蛇身上）
+    # 初始食物
     food = [12, 10]
     snake_set = set(tuple(p) for p in snake)
     while tuple(food) in snake_set:
         food = [random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)]
 
-    for frame_idx in range(FRAMES):
+    for _ in range(FRAMES):
+        # 记录当前帧
+        frames.append({
+            'snake': [p[:] for p in snake],
+            'food': food[:] if food else [-1, -1],
+            'score': score,
+            'game_over': game_over,
+            'direction': direction
+        })
+
         if game_over:
-            # 游戏结束，重复最后一帧
-            frames.append({
-                'snake': snake.copy(),
-                'food': food.copy(),
-                'score': score,
-                'game_over': True,
-                'direction': direction
-            })
             continue
 
-        # ===== 自动寻路 =====
-        # 构建蛇身集合（用于碰撞检测）
-        snake_body_set = set(tuple(p) for p in snake[1:])  # 不包含头部
-        
-        # 计算最佳方向
-        best_dir = find_path_to_food(snake[0], food, snake_body_set)
-        
-        # 如果找到了可行方向，就使用它；否则保持原方向
-        if best_dir:
-            direction = best_dir
-        # else: 保持原方向（可能会撞墙，但game_over会处理）
+        # 寻路
+        body_set = set(tuple(p) for p in snake[1:])
+        new_dir = find_path_to_food(snake[0], food, body_set)
+        if new_dir:
+            direction = new_dir
 
-        # 计算新头部
+        # 移动
         head = snake[0]
-        new_head = head.copy()
+        new_head = head[:]
         if direction == 'right':
             new_head[0] += 1
         elif direction == 'left':
@@ -129,71 +101,50 @@ def generate_frames():
         elif direction == 'down':
             new_head[1] += 1
 
-        # 检查是否吃到食物
         is_eating = (new_head[0] == food[0] and new_head[1] == food[1])
 
         # 构建新蛇
         new_snake = [new_head]
-        end_index = len(snake) - (0 if is_eating else 1)
-        for i in range(end_index):
+        end_idx = len(snake) - (0 if is_eating else 1)
+        for i in range(end_idx):
             new_snake.append(snake[i])
 
         # 碰撞检测
-        wall_collision = (new_head[0] < 0 or new_head[0] >= GRID_SIZE or
-                          new_head[1] < 0 or new_head[1] >= GRID_SIZE)
+        wall = (new_head[0] < 0 or new_head[0] >= GRID_SIZE or
+                new_head[1] < 0 or new_head[1] >= GRID_SIZE)
 
-        self_collision = False
-        head_str = f"{new_head[0]},{new_head[1]}"
+        self_hit = False
         for i in range(1, len(new_snake)):
-            if f"{new_snake[i][0]},{new_snake[i][1]}" == head_str:
-                self_collision = True
+            if new_snake[i][0] == new_head[0] and new_snake[i][1] == new_head[1]:
+                self_hit = True
                 break
 
-        if wall_collision or self_collision:
+        if wall or self_hit:
             game_over = True
-            frames.append({
-                'snake': new_snake,
-                'food': food.copy(),
-                'score': score,
-                'game_over': True,
-                'direction': direction
-            })
+            snake = new_snake
             continue
 
         snake = new_snake
 
-        # 处理吃到食物
+        # 吃到食物
         if is_eating:
             score += 1
             snake_set = set(tuple(p) for p in snake)
-            
-            # 检查是否胜利（蛇占满所有格子）
             if len(snake_set) >= GRID_SIZE * GRID_SIZE:
                 game_over = True
-                frames.append({
-                    'snake': snake,
-                    'food': food,
-                    'score': score,
-                    'game_over': True,
-                    'direction': direction
-                })
                 continue
 
             # 生成新食物
-            attempts = 0
             new_food = None
-            while attempts < 2000:
+            for _ in range(2000):
                 fx = random.randint(0, GRID_SIZE - 1)
                 fy = random.randint(0, GRID_SIZE - 1)
                 if (fx, fy) not in snake_set:
                     new_food = [fx, fy]
                     break
-                attempts += 1
-
             if new_food:
                 food = new_food
             else:
-                # 兜底：遍历所有格子
                 for y in range(GRID_SIZE):
                     for x in range(GRID_SIZE):
                         if (x, y) not in snake_set:
@@ -202,12 +153,13 @@ def generate_frames():
                     if food:
                         break
 
-        # 记录这一帧
+    # 如果最后一帧不是 game_over，添加一个结束标记
+    if not game_over:
         frames.append({
-            'snake': snake.copy(),
-            'food': food.copy(),
+            'snake': [p[:] for p in snake],
+            'food': food[:] if food else [-1, -1],
             'score': score,
-            'game_over': False,
+            'game_over': True,
             'direction': direction
         })
 
@@ -215,10 +167,10 @@ def generate_frames():
 
 
 def render_svg(frames, output_path="snake.svg"):
-    """渲染 SVG 动画"""
+    """渲染 SVG（使用 opacity 控制显示）"""
     parts = []
 
-    # ====== SVG 头部 ======
+    # SVG 头部
     parts.append(f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg"
      width="{CANVAS_SIZE}" height="{CANVAS_SIZE + 60}"
@@ -245,33 +197,32 @@ def render_svg(frames, output_path="snake.svg"):
 
     parts.append('    </g>\n')
 
-    # ====== 每一帧 ======
-    total_duration = len(frames) * MOVE_INTERVAL
-
+    # 每一帧：使用 opacity 控制，默认透明
     for idx, frame in enumerate(frames):
         begin = idx * MOVE_INTERVAL
-        end = (idx + 1) * MOVE_INTERVAL if idx < len(frames) - 1 else total_duration
+        duration = MOVE_INTERVAL
 
         snake = frame['snake']
         food = frame['food']
         game_over = frame['game_over']
         direction = frame.get('direction', 'right')
-        score = frame['score']
 
-        # ---- 食物 ----
+        # 所有元素放入一个组，用 opacity 控制显示
+        parts.append(f'''
+    <g opacity="0">
+        <animate attributeName="opacity" to="1" begin="{begin}s" dur="{duration}s" fill="freeze"/>
+        <animate attributeName="opacity" to="0" begin="{begin + duration}s" dur="0.01s" fill="freeze"/>''')
+
+        # 食物（只在非 game_over 帧显示）
         if food and food[0] >= 0 and not game_over:
             fx, fy = food
             cx = fx * CELL_SIZE + CELL_SIZE / 2
             cy = fy * CELL_SIZE + CELL_SIZE / 2
             parts.append(f'''
-    <!-- 帧 {idx}: 食物 -->
-    <g visibility="hidden">
-        <set attributeName="visibility" to="visible" begin="{begin}s" end="{end}s"/>
         <circle cx="{cx}" cy="{cy}" r="{CELL_SIZE*0.38}" fill="{FOOD_COLOR}" class="food"/>
-        <circle cx="{cx-2}" cy="{cy-3}" r="{CELL_SIZE*0.15}" fill="#ff8a8a" opacity="0.6"/>
-    </g>''')
+        <circle cx="{cx-2}" cy="{cy-3}" r="{CELL_SIZE*0.15}" fill="#ff8a8a" opacity="0.6"/>''')
 
-        # ---- 蛇 ----
+        # 蛇
         for i, (sx, sy) in enumerate(snake):
             is_head = (i == 0)
             x = sx * CELL_SIZE + 1
@@ -287,36 +238,29 @@ def render_svg(frames, output_path="snake.svg"):
                 color = f"rgb({r}, {g}, 50)"
 
             parts.append(f'''
-    <!-- 帧 {idx}: 蛇节 {i} -->
-    <g visibility="hidden">
-        <set attributeName="visibility" to="visible" begin="{begin}s" end="{end}s"/>
         <rect x="{x}" y="{y}" width="{size}" height="{size}" rx="3" fill="{color}"/>''')
 
-            # ---- 蛇头眼睛 ----
+            # 蛇头眼睛
             if is_head:
                 if direction == 'right':
                     ex1, ey1, ex2, ey2 = x + 9, y + 3, x + 9, y + 11
-                    px1, py1, px2, py2 = 1, 0, 1, 0
                 elif direction == 'left':
                     ex1, ey1, ex2, ey2 = x + 3, y + 3, x + 3, y + 11
-                    px1, py1, px2, py2 = -1, 0, -1, 0
                 elif direction == 'up':
                     ex1, ey1, ex2, ey2 = x + 3, y + 3, x + 11, y + 3
-                    px1, py1, px2, py2 = 0, -1, 0, -1
                 else:
                     ex1, ey1, ex2, ey2 = x + 3, y + 9, x + 11, y + 9
-                    px1, py1, px2, py2 = 0, 1, 0, 1
 
                 parts.append(f'''
         <circle cx="{ex1}" cy="{ey1}" r="2.5" fill="#f0faf4"/>
         <circle cx="{ex2}" cy="{ey2}" r="2.5" fill="#f0faf4"/>
-        <circle cx="{ex1+px1}" cy="{ey1+py1}" r="1.2" fill="#0a1a1a"/>
-        <circle cx="{ex2+px2}" cy="{ey2+py2}" r="1.2" fill="#0a1a1a"/>''')
+        <circle cx="{ex1+1}" cy="{ey1}" r="1.2" fill="#0a1a1a"/>
+        <circle cx="{ex2+1}" cy="{ey2}" r="1.2" fill="#0a1a1a"/>''')
 
-            parts.append('''
+        parts.append('''
     </g>''')
 
-    # ====== 底部分数栏 ======
+    # 固定分数栏（一直显示）
     final_score = frames[-1]['score'] if frames else 0
     parts.append(f'''
     <!-- 分数栏 -->
@@ -328,43 +272,32 @@ def render_svg(frames, output_path="snake.svg"):
         </text>
     </g>''')
 
-    # ====== 游戏结束蒙层 ======
-    if frames and frames[-1]['game_over']:
-        parts.append(f'''
-    <!-- 游戏结束 -->
-    <g>
-        <rect x="0" y="0" width="{CANVAS_SIZE}" height="{CANVAS_SIZE}"
-              fill="rgba(8,18,24,0.75)" visibility="hidden">
-            <animate attributeName="visibility" to="visible"
-                     begin="{total_duration}s" dur="0.01s" fill="freeze"/>
-        </rect>
+    # 游戏结束蒙层（最后一帧之后显示）
+    total_time = len(frames) * MOVE_INTERVAL
+    parts.append(f'''
+    <!-- 游戏结束蒙层 -->
+    <g opacity="0">
+        <animate attributeName="opacity" to="1" begin="{total_time}s" dur="0.5s" fill="freeze"/>
+        <rect x="0" y="0" width="{CANVAS_SIZE}" height="{CANVAS_SIZE}" fill="rgba(8,18,24,0.75)"/>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE/2 - 10}"
-              text-anchor="middle" fill="#f28b82" font-size="30" font-weight="bold"
-              visibility="hidden">
+              text-anchor="middle" fill="#f28b82" font-size="30" font-weight="bold">
             💀 游戏结束
-            <animate attributeName="visibility" to="visible"
-                     begin="{total_duration}s" dur="0.01s" fill="freeze"/>
         </text>
         <text x="{CANVAS_SIZE/2}" y="{CANVAS_SIZE/2 + 30}"
-              text-anchor="middle" fill="#bdd9d0" font-size="13"
-              visibility="hidden">
+              text-anchor="middle" fill="#bdd9d0" font-size="13">
             🔄 刷新页面重新播放
-            <animate attributeName="visibility" to="visible"
-                     begin="{total_duration}s" dur="0.01s" fill="freeze"/>
         </text>
     </g>''')
 
     parts.append('\n</svg>')
 
-    # 写入文件
     content = ''.join(parts)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
     print(f"✅ 已生成: {output_path}")
-    print(f"📊 帧数: {len(frames)}, 时长: {total_duration:.1f}s")
+    print(f"📊 总帧数: {len(frames)}, 时长: {len(frames) * MOVE_INTERVAL:.1f}s")
     print(f"🏆 最终得分: {final_score}")
-    print(f"📝 大小: {len(content)} 字节")
     return True
 
 
